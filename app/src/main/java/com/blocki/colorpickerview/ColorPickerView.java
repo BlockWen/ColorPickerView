@@ -226,7 +226,40 @@ public class ColorPickerView extends View {
      * */
     private void drawPoint(Canvas canvas){
         canvas.drawCircle(pointX,pointY,pointRadius,pointPaint);
+    }
 
+    /**
+     * 绘制局部放大的左上角图
+     * */
+    private void drawMagnifyCircle(Canvas canvas){
+
+        if (cornorCircleType == TYPE_MAGNIFY){
+            if (magnifyBitmap == null){
+                //创建放大后的bitmap，长宽在float计算后转为int，避免差异过大
+                magnifyBitmap = Bitmap.createScaledBitmap(mBitmap,(int)(width * scaleMultiple),(int)(height * scaleMultiple),true);
+                BitmapShader shader = new BitmapShader(magnifyBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                shapeDrawable = new ShapeDrawable(new OvalShape());
+                shapeDrawable.getPaint().setShader(shader);
+                //设置drawable相对于canvas的位置
+                shapeDrawable.setBounds(magnifyCircleLeft, magnifyCircleTop,magnifyCircleRight,magnifyCircleBottom);
+                translate();
+            }
+            shapeDrawable.draw(canvas);
+        } else if (cornorCircleType == TYPE_FILL){
+            if (magnifyBitmap == null){
+                magnifyPaint.setColor(curRGBColor);
+                magnifyPaint.setStyle(Paint.Style.FILL);
+                magnifyPaint.setStrokeWidth(1);
+                magnifyPaint.setAntiAlias(true);
+            }
+            magnifyPaint.setColor(curRGBColor);
+            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius,magnifyPaint);
+        }
+
+        if (drawMagnifyBounds){
+            //画个边界 半径加1避免覆盖边界颜色
+            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius+1,magnifyBoundsPaint);
+        }
     }
 
     /**
@@ -309,12 +342,22 @@ public class ColorPickerView extends View {
     }
 
     /**
-     * 移动画好的bigmap达到放大图跟随移动的效果
+     * 计算圆盘左上角外切于取色盘的圆点坐标以及top left right bottm 四点
+     * 具体计算详见github图文介绍
      * */
-    private void translate(){
-        //使用matrix进行对canvas进行平移
-        matrix.setTranslate(magnifyCircleRadius - pointX * scaleMultiple, magnifyCircleRadius - pointY * scaleMultiple);
-        shapeDrawable.getPaint().getShader().setLocalMatrix(matrix);
+    private void calculateTopLeftCornerCircle(){
+        magnifyCircleRadius = (float) ((3 - 2*Math.sqrt(2)) * circleRadius);
+        //勾股求出取色盘圆点到放大图圆点连线组成三角形的两底边长度
+        float bottomLength = (float) ((circleRadius + magnifyCircleRadius) / Math.sqrt(2));
+        magnifyCircleX = circleX - bottomLength;
+        magnifyCircleY = circleY - bottomLength;
+        //由于跟随触摸点移动的小球会出现在圆盘外，所以要减去小球半径让放大图和小球不重合在一起,要在算完放大圆中心点坐标后减去小球的半径
+        magnifyCircleRadius = magnifyCircleRadius - pointRadius;
+        //计算drawable的位置
+        magnifyCircleLeft = (int) (magnifyCircleX - magnifyCircleRadius);
+        magnifyCircleTop = (int) (magnifyCircleY - magnifyCircleRadius);
+        magnifyCircleRight = (int) (magnifyCircleX + magnifyCircleRadius);
+        magnifyCircleBottom = (int) (magnifyCircleY + magnifyCircleRadius);
     }
 
     /**
@@ -372,56 +415,15 @@ public class ColorPickerView extends View {
     }
 
     /**
-     * 计算圆盘左上角外切于取色盘的圆点坐标以及top left right bottm 四点
+     * 移动画好的bigmap达到放大图跟随移动的效果
      * */
-    private void calculateTopLeftCornerCircle(){
-        magnifyCircleRadius = (float) ((3 - 2*Math.sqrt(2)) * circleRadius);
-        //勾股求出取色盘圆点到放大图圆点连线组成三角形的两底边长度
-        float bottomLength = (float) ((circleRadius + magnifyCircleRadius) / Math.sqrt(2));
-        magnifyCircleX = circleX - bottomLength;
-        magnifyCircleY = circleY - bottomLength;
-        //由于跟随触摸点移动的小球会出现在圆盘外，所以要减去小球半径让放大图和小球不重合在一起,要在算完放大圆中心点坐标后减去小球的半径
-        magnifyCircleRadius = magnifyCircleRadius - pointRadius;
-        //计算drawable的位置
-        magnifyCircleLeft = (int) (magnifyCircleX - magnifyCircleRadius);
-        magnifyCircleTop = (int) (magnifyCircleY - magnifyCircleRadius);
-        magnifyCircleRight = (int) (magnifyCircleX + magnifyCircleRadius);
-        magnifyCircleBottom = (int) (magnifyCircleY + magnifyCircleRadius);
+    private void translate(){
+        //使用matrix进行对canvas进行平移
+        matrix.setTranslate(magnifyCircleRadius - pointX * scaleMultiple, magnifyCircleRadius - pointY * scaleMultiple);
+        shapeDrawable.getPaint().getShader().setLocalMatrix(matrix);
     }
 
-    /**
-     * 绘制局部放大的左上角图
-     * */
-    private void drawMagnifyCircle(Canvas canvas){
 
-        if (cornorCircleType == TYPE_MAGNIFY){
-            if (magnifyBitmap == null){
-                //创建放大后的bitmap，长宽在float计算后转为int，避免差异过大
-                magnifyBitmap = Bitmap.createScaledBitmap(mBitmap,(int)(width * scaleMultiple),(int)(height * scaleMultiple),true);
-                BitmapShader shader = new BitmapShader(magnifyBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-                shapeDrawable = new ShapeDrawable(new OvalShape());
-                shapeDrawable.getPaint().setShader(shader);
-                //设置drawable相对于canvas的位置
-                shapeDrawable.setBounds(magnifyCircleLeft, magnifyCircleTop,magnifyCircleRight,magnifyCircleBottom);
-                translate();
-            }
-            shapeDrawable.draw(canvas);
-        } else if (cornorCircleType == TYPE_FILL){
-            if (magnifyBitmap == null){
-                magnifyPaint.setColor(curRGBColor);
-                magnifyPaint.setStyle(Paint.Style.FILL);
-                magnifyPaint.setStrokeWidth(1);
-                magnifyPaint.setAntiAlias(true);
-            }
-            magnifyPaint.setColor(curRGBColor);
-            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius,magnifyPaint);
-        }
-
-        if (drawMagnifyBounds){
-            //画个边界 半径加1避免覆盖边界颜色
-            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius+1,magnifyBoundsPaint);
-        }
-    }
 
     /**
      * 获取触摸点的颜色值
