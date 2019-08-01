@@ -26,8 +26,10 @@ public class ColorPickerView extends View {
 
     private static final String TAG = "ColorPickerView";
 
+    //view的宽高值
     private int height = 0;
     private int width = 0;
+
     private float circleX = 0;
     private float circleY = 0;
     private float circleRadius = 0;
@@ -39,6 +41,7 @@ public class ColorPickerView extends View {
     private Paint paint = new Paint();
     private Paint pointPaint = new Paint();
     private Paint magnifyPaint = new Paint();
+    private Paint magnifyBoundsPaint = new Paint();
     //缩放倍数，默认2倍，具体需要计算（倍数 = 左上角圆的半径/触摸点圆的半径）
     private float scaleMultiple = 2;
     //绘制完成后的取色盘bitmap
@@ -57,17 +60,45 @@ public class ColorPickerView extends View {
     private float magnifyCircleRadius = 0;
 
     //drawable相对于canvas的四点位置
-    private int left = 0;
-    private int top = 0;
-    private int right = 0;
-    private int bottom = 0;
-
     private int magnifyCircleTop = 0,magnifyCircleLeft = 0,magnifyCircleRight = 0,magnifyCircleBottom = 0;
-
+    //当前触摸点的颜色值
     private int curRGBColor = 0;
-
-    private boolean drawMagnifyBitmap = true;
+    private int[] rgb = new int[3];
+    //是否画放大图 true为画 false不画
+    private boolean drawMagnifyCircle = true;
+    //是否画放大图的边界 true为画 false 不画
     private boolean drawMagnifyBounds = false;
+
+    private int cornorCircleType = 0;
+
+    public final static int TYPE_MAGNIFY = 0;
+    public final static int TYPE_FILL = 1;
+
+    private Context context;
+
+    public ColorPickerView(Context context) {
+        super(context);
+        init();
+        this.context = context;
+    }
+
+    public ColorPickerView(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+        init();
+        this.context = context;
+    }
+
+    public ColorPickerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init();
+        this.context = context;
+    }
+
+    public ColorPickerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+        init();
+        this.context = context;
+    }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -80,22 +111,28 @@ public class ColorPickerView extends View {
         if (w == h){
             circleX = w/2;
             circleY = h/2;
-            circleRadius = (w-20)/2;
+            circleRadius = w/2;
         }else if (w > h){
             circleX = w/2;
             circleY = h/2;
-            circleRadius = (h-20)/2;
+            circleRadius = h/2;
         } else if (w < h){
             circleX = w/2;
             circleY = h/2;
-            circleRadius = (w-20)/2;
+            circleRadius = w/2;
         }
+        //初始触摸点位置设为圆盘中心
         pointX = circleX;
         pointY = circleY;
+        //初始触摸点的圆半径为圆盘的1/25
         pointRadius = circleRadius/25;
+        //设置彩色圆盘半径为24/25
+        circleRadius = circleRadius/25*24;
+        //创建圆盘bitmap，用于取色
         mBitmap = Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
         mCanvas = new Canvas(mBitmap);
         Log.d(TAG, "onSizeChanged: circle X:" + circleX + " Y:" + circleY + " radius:" + circleRadius + " pointRadius:" + pointRadius);
+
         calculateTopLeftCornerCircle();
         //计算放大倍数
         scaleMultiple = magnifyCircleRadius / pointRadius;
@@ -108,29 +145,30 @@ public class ColorPickerView extends View {
         super.draw(canvas);
     }
 
-    public ColorPickerView(Context context) {
-        super(context);
-        init();
-    }
 
-    public ColorPickerView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        init();
-    }
 
     /**
      * 初始化paint
      * */
     public void init(){
+        Log.d(TAG, "init: ");
+        
         pointPaint.setColor(Color.BLACK);
         pointPaint.setStyle(Paint.Style.STROKE);
-        pointPaint.setStrokeWidth(2);
+        pointPaint.setStrokeWidth(1);
         pointPaint.setAntiAlias(true);
 
+
+        Log.d(TAG, "init: paint-- TYPE_MAGNIFY ");
         magnifyPaint.setColor(Color.BLACK);
         magnifyPaint.setStyle(Paint.Style.STROKE);
-        magnifyPaint.setStrokeWidth(2);
+        magnifyPaint.setStrokeWidth(1);
         magnifyPaint.setAntiAlias(true);
+
+        magnifyBoundsPaint.setColor(Color.BLACK);
+        magnifyBoundsPaint.setStyle(Paint.Style.STROKE);
+        magnifyBoundsPaint.setStrokeWidth(1);
+        magnifyBoundsPaint.setAntiAlias(true);
 
 
 
@@ -155,7 +193,7 @@ public class ColorPickerView extends View {
         drawSweepGradinent(canvas);
         drawRadialGradient(canvas);
         drawPoint(canvas);
-        if (drawMagnifyBitmap){
+        if (drawMagnifyCircle){
             drawMagnifyCircle(canvas);
         }
     }
@@ -188,6 +226,7 @@ public class ColorPickerView extends View {
      * */
     private void drawPoint(Canvas canvas){
         canvas.drawCircle(pointX,pointY,pointRadius,pointPaint);
+
     }
 
     /**
@@ -233,7 +272,11 @@ public class ColorPickerView extends View {
                     Log.d(TAG, "onTouchEvent DOWN: 触摸点在圆的外面");
                     calculateNearestCoordinate(event.getX(),event.getY());
                 }
-                translate();
+                if (cornorCircleType == TYPE_MAGNIFY){
+                    translate();
+                }else{
+                    curRGBColor = getPointColor();
+                }
                 invalidate();
                 return true;
             case MotionEvent.ACTION_MOVE:
@@ -247,7 +290,11 @@ public class ColorPickerView extends View {
                     Log.d(TAG, "onTouchEvent MOVE: 触摸点在圆的外面");
                     calculateNearestCoordinate(event.getX(),event.getY());
                 }
-                translate();
+                if (cornorCircleType == TYPE_MAGNIFY){
+                    translate();
+                }else{
+                    curRGBColor = getPointColor();
+                }
                 invalidate();
                 break;
             case MotionEvent.ACTION_UP:
@@ -265,6 +312,7 @@ public class ColorPickerView extends View {
      * 移动画好的bigmap达到放大图跟随移动的效果
      * */
     private void translate(){
+        //使用matrix进行对canvas进行平移
         matrix.setTranslate(magnifyCircleRadius - pointX * scaleMultiple, magnifyCircleRadius - pointY * scaleMultiple);
         shapeDrawable.getPaint().getShader().setLocalMatrix(matrix);
     }
@@ -332,7 +380,7 @@ public class ColorPickerView extends View {
         float bottomLength = (float) ((circleRadius + magnifyCircleRadius) / Math.sqrt(2));
         magnifyCircleX = circleX - bottomLength;
         magnifyCircleY = circleY - bottomLength;
-        //由于跟随触摸点移动的小球会出现在圆盘外，所以要减去小球半径让放大图和小球不重合在一起,要在算完原点坐标后减去小球的半径
+        //由于跟随触摸点移动的小球会出现在圆盘外，所以要减去小球半径让放大图和小球不重合在一起,要在算完放大圆中心点坐标后减去小球的半径
         magnifyCircleRadius = magnifyCircleRadius - pointRadius;
         //计算drawable的位置
         magnifyCircleLeft = (int) (magnifyCircleX - magnifyCircleRadius);
@@ -346,43 +394,86 @@ public class ColorPickerView extends View {
      * */
     private void drawMagnifyCircle(Canvas canvas){
 
-        if (magnifyBitmap == null){
-            //创建放大后的bitmap，长宽在float计算后转为int
-            magnifyBitmap = Bitmap.createScaledBitmap(mBitmap,(int)(width * scaleMultiple),(int)(height * scaleMultiple),true);
-            BitmapShader shader = new BitmapShader(magnifyBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            shapeDrawable = new ShapeDrawable(new OvalShape());
-            shapeDrawable.getPaint().setShader(shader);
-
-            shapeDrawable.setBounds(magnifyCircleLeft, magnifyCircleTop,magnifyCircleRight,magnifyCircleBottom);
+        if (cornorCircleType == TYPE_MAGNIFY){
+            if (magnifyBitmap == null){
+                //创建放大后的bitmap，长宽在float计算后转为int，避免差异过大
+                magnifyBitmap = Bitmap.createScaledBitmap(mBitmap,(int)(width * scaleMultiple),(int)(height * scaleMultiple),true);
+                BitmapShader shader = new BitmapShader(magnifyBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                shapeDrawable = new ShapeDrawable(new OvalShape());
+                shapeDrawable.getPaint().setShader(shader);
+                //设置drawable相对于canvas的位置
+                shapeDrawable.setBounds(magnifyCircleLeft, magnifyCircleTop,magnifyCircleRight,magnifyCircleBottom);
+                translate();
+            }
+            shapeDrawable.draw(canvas);
+        } else if (cornorCircleType == TYPE_FILL){
+            if (magnifyBitmap == null){
+                magnifyPaint.setColor(curRGBColor);
+                magnifyPaint.setStyle(Paint.Style.FILL);
+                magnifyPaint.setStrokeWidth(1);
+                magnifyPaint.setAntiAlias(true);
+            }
+            magnifyPaint.setColor(curRGBColor);
+            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius,magnifyPaint);
         }
-        shapeDrawable.draw(canvas);
-        //画个边界 半径加1避免覆盖边界颜色
+
         if (drawMagnifyBounds){
-            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius+1,magnifyPaint);
+            //画个边界 半径加1避免覆盖边界颜色
+            canvas.drawCircle(magnifyCircleX,magnifyCircleY,magnifyCircleRadius+1,magnifyBoundsPaint);
         }
     }
 
     /**
      * 获取触摸点的颜色值
      * */
-    public int getPointColor(){
+    private int getPointColor(){
         Log.d(TAG, "getColor: ");
         int pixelColor = mBitmap.getPixel((int)pointX,(int)pointY);
         return pixelColor;
     }
 
     /**
-     * 返回int数组，数组内0：Red值 1：Green值 2：Blue值
+     * 返回大小为3的int数组，数组位置0：Red值 1：Green值 2：Blue值
      * */
     public int[] getRGBArray(){
-        int[] rgb = new int[3];
-        int pixelColor = mBitmap.getPixel((int)pointX,(int)pointY);
-        rgb[0] = Color.red(pixelColor);
-        rgb[1] = Color.green(pixelColor);
-        rgb[2] = Color.blue(pixelColor);
+        rgb[0] = Color.red(curRGBColor);
+        rgb[1] = Color.green(curRGBColor);
+        rgb[2] = Color.blue(curRGBColor);
         return rgb;
     }
 
+    //获取当前触摸点坐标的像素点颜色
+    public int getCurRGBColor(){
+        return this.curRGBColor;
+    }
 
+    public boolean isDrawMagnifyCircle() {
+        return drawMagnifyCircle;
+    }
+
+    public void setDrawMagnifyCircle(boolean drawMagnifyCircle) {
+        this.drawMagnifyCircle = drawMagnifyCircle;
+    }
+
+    public boolean isDrawMagnifyBounds() {
+        return drawMagnifyBounds;
+    }
+
+    public void setDrawMagnifyBounds(boolean drawMagnifyBounds) {
+        this.drawMagnifyBounds = drawMagnifyBounds;
+    }
+
+    public void setCornorCircleType(int cornorCircleType) {
+        this.cornorCircleType = cornorCircleType;
+    }
+
+    //未想好放大倍数和触摸点圆半径的设置边界在哪。暂时不允许调用
+    private void setScaleMultiple(float scaleMultiple) {
+        this.scaleMultiple = scaleMultiple;
+    }
+
+    private void setPointRadius(float pointRadius) {
+        this.pointRadius = pointRadius;
+    }
 
 }
