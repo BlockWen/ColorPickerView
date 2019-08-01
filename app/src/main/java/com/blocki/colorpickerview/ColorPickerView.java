@@ -158,8 +158,6 @@ public class ColorPickerView extends View {
         pointPaint.setStrokeWidth(1);
         pointPaint.setAntiAlias(true);
 
-
-        Log.d(TAG, "init: paint-- TYPE_MAGNIFY ");
         magnifyPaint.setColor(Color.BLACK);
         magnifyPaint.setStyle(Paint.Style.STROKE);
         magnifyPaint.setStrokeWidth(1);
@@ -169,8 +167,6 @@ public class ColorPickerView extends View {
         magnifyBoundsPaint.setStyle(Paint.Style.STROKE);
         magnifyBoundsPaint.setStrokeWidth(1);
         magnifyBoundsPaint.setAntiAlias(true);
-
-
 
     }
 
