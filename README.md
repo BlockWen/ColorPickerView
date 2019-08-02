@@ -6,6 +6,7 @@
 
 ### 使用方法：
 [![](https://jitpack.io/v/BlockWen/ColorPickerView.svg)](https://jitpack.io/#BlockWen/ColorPickerView) 
+
 添加Jitpack仓库到你Project的build.gradle中。
 
 `maven { url 'https://jitpack.io' }`
@@ -14,8 +15,23 @@
 
 `implementation 'com.github.BlockWen:ColorPickerView:1.0.2'`
 
-引入依赖后即可使用 例：
+在xml中：
+```
+<com.blocki.mylibrary.ColorPickerView
+        android:id="@+id/colorPicker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+```
 
+在Java中的配置：
+```
+//设置左上角圆类型 TYPE_MAGNIFY:触摸点的局部放大图 TYPE_FILL：触摸点的颜色图 默认TYPE_MAGNIFY
+pickerView.setCornorCircleType(ColorPickerView.TYPE_MAGNIFY);
+//设置是否绘制左上角圆的边界，true：绘制 false：不绘制 默认false。
+pickerView.setDrawMagnifyBounds(false);
+//设置是否绘制左上角的圆。true：绘制 false：不绘制 默认true。
+pickerView.setDrawMagnifyCircle(true);
+```
 
 计算圆盘外触摸点和圆心连线 与 圆盘边界交点：
 ![图片名称](https://github.com/BlockWen/ColorPickerView/blob/master/pics_readme/calculateNearestCoordinate.png?raw=true)
