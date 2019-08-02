@@ -6,13 +6,15 @@
 
 ### 使用方法：
 [![](https://jitpack.io/v/BlockWen/ColorPickerView.svg)](https://jitpack.io/#BlockWen/ColorPickerView) 
-1. 添加Jitpack仓库到你Project的build.gradle中。
+添加Jitpack仓库到你Project的build.gradle中。
 
 `maven { url 'https://jitpack.io' }`
 
-2. 添加依赖到app的build.gradle中。
+添加依赖到app的build.gradle中。
 
 `implementation 'com.github.BlockWen:ColorPickerView:1.0.2'`
+
+引入依赖后即可使用 例：
 
 
 计算圆盘外触摸点和圆心连线 与 圆盘边界交点：
