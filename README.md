@@ -18,9 +18,9 @@
 在xml中：
 ```
 <com.blocki.mylibrary.ColorPickerView
-        android:id="@+id/colorPicker"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    android:id="@+id/colorPicker"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
 ```
 
 在Java中的配置：
@@ -31,6 +31,14 @@ pickerView.setCornorCircleType(ColorPickerView.TYPE_MAGNIFY);
 pickerView.setDrawMagnifyBounds(false);
 //设置是否绘制左上角的圆。true：绘制 false：不绘制 默认true。
 pickerView.setDrawMagnifyCircle(true);
+```
+
+如何获取颜色值?
+```
+//获取当前触摸点的颜色值，返回值int
+int color = pickerView.getCurRGBColor();
+//获取当前触摸点的red，green，blue颜色值 数组[0] red 数组[1] green 数组[2]blue
+int[] rgbArray = pickerView.getRGBArray();
 ```
 
 计算圆盘外触摸点和圆心连线 与 圆盘边界交点：
