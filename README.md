@@ -9,6 +9,7 @@
 1. 添加Jitpack仓库到你Project的build.gradle中。
 
 `maven { url 'https://jitpack.io' }`
+
 2. 添加依赖到app的build.gradle中。
 
 `implementation 'com.github.BlockWen:ColorPickerView:1.0.2'`
