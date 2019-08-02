@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="100dp" />
 
-    <com.blocki.colorpickerview.ColorPickerView
+    <com.blocki.mylibrary.ColorPickerView
         android:id="@+id/main_colorPickerView"
         android:layout_width="match_parent"
         android:layout_height="300dp" />

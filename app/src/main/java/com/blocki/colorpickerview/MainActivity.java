@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.blocki.mylibrary.ColorPickerView;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";

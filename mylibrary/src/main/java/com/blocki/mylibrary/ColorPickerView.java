@@ -1,4 +1,4 @@
-package com.blocki.colorpickerview;
+package com.blocki.mylibrary;
 
 import android.content.Context;
 import android.graphics.Bitmap;
