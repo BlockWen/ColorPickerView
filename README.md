@@ -1,7 +1,7 @@
 # ColorPickerView
 这是一个类似Android Studio内置的圆形取色板。
 
-[![](https://jitpack.io/v/BlockWen/ColorPickerView.svg)](https://jitpack.io/#BlockWen/ColorPickerView)
+[![](https://jitpack.io/v/BlockWen/ColorPickerView.svg)](https://jitpack.io/#BlockWen/ColorPickerView) 
 
 ### 我们先来看一下效果图：
 <img src="https://github.com/BlockWen/ColorPickerView/blob/master/pics_readme/last.gif?raw=true" width="30%" height="30%" />
