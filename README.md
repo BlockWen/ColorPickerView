@@ -1,5 +1,5 @@
 # ColorPickerView
-这是一个类似Android Studio内置的圆形取色板。在手触摸到圆形区域时按点取色
+这是一个类似Android Studio内置的圆形取色板。在手触摸到圆形区域时按点取色，手指移出圆形区域时取色点为手指位置和圆盘边界交点位置。
 
 ### 我们先来看一下效果图：左上角的图为触摸点区域的放大图（可选择填充颜色或放大图）
 <img src="https://github.com/BlockWen/ColorPickerView/blob/master/pics_readme/last.gif?raw=true" width="30%" height="30%" />
